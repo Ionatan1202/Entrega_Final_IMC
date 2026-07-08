@@ -1,0 +1,5 @@
+com\imc\rest\IMCService.class
+com\imc\model\CalculoIMC.class
+com\imc\config\ConexionDB.class
+com\imc\model\Usuario.class
+com\imc\rest\ApplicationConfig.class

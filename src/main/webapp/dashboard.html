@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Control - IMC</title>
+    <style>body { font-family: Arial; margin: 40px; } table, th, td { border: 1px solid black; border-collapse: collapse; padding: 10px; text-align: center; } th { background-color: #f2f2f2; }</style>
+</head>
+<body>
+    <h2>Bienvenido/a, <span id="nombreUsuario">...</span></h2>
+    <p>Tu estatura registrada es de: <strong><span id="estaturaUsuario">0</span> metros</strong>.</p>
+    <button onclick="logout()">Cerrar Sesión</button>
+
+    <h3>Calcular Nuevo IMC</h3>
+    <input type="number" step="0.1" id="peso" placeholder="Masa corporal (kg)">
+    <button onclick="calcularIMC()">Calcular e Guardar</button>
+    
+    <h4 id="resultadoIMC" style="color: blue;"></h4>
+
+    <h3>Tu Histórico de Cálculos</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha y Hora</th>
+                <th>Peso (kg)</th>
+                <th>IMC</th>
+            </tr>
+        </thead>
+        <tbody id="tablaHistorico"></tbody>
+    </table>
+
+    <script>
+        
+        async function verificarSesion() {
+            const response = await fetch('/Actividad_Final/api/imc/sesion');
+            const data = await response.json();
+            if (!data.activo) {
+                alert("Acceso denegado. Por favor inicia sesión.");
+                window.location.href = 'index.html';
+            } else {
+                document.getElementById('nombreUsuario').innerText = data.usuario.nombre;
+                document.getElementById('estaturaUsuario').innerText = data.usuario.estatura;
+                cargarHistorico();
+            }
+        }
+
+        async function calcularIMC() {
+    const formData = new URLSearchParams(new FormData(document.getElementById('formCalcular')));
+    
+    try {
+        const response = await fetch('./api/imc/calcular', { 
+            method: 'POST', 
+            
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: formData.toString() 
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            document.getElementById('resultadoIMC').innerText = `Tu IMC actual calculado es: ${data.imc}`;
+            cargarHistorico(); 
+        } else {
+            alert(data.error);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+    }
+}
+
+        async function cargarHistorico() {
+            const response = await fetch('/Actividad_Final/api/imc/historico');
+            const datos = await response.json();
+            const tabla = document.getElementById('tablaHistorico');
+            tabla.innerHTML = '';
+            
+            datos.forEach(reg => {
+                const fila = `<tr>
+                    <td>${reg.fecha}</td>
+                    <td>${reg.peso} kg</td>
+                    <td>${reg.imc}</td>
+                </tr>`;
+                tabla.innerHTML += fila;
+            });
+        }
+
+        async function logout() {
+            await fetch('/api/logout');
+            window.location.href = 'index.html';
+        }
+
+        window.onload = verificarSesion;
+    </script>
+</body>
+</html>
